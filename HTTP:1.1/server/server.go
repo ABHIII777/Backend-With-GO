@@ -9,6 +9,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 ) 
 
 type HttpRequestStruct struct {
@@ -155,17 +156,33 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
+	if err := conn.SetReadDeadline(time.Now().Add(30 * time.Second)); err != nil {
+		log.Printf("set read deadline: %v", err)
+		return
+	}
+
 	reader := bufio.NewReader(conn)
 
 	req, err := HttpRequestParser(reader)
 	if err != nil {
+		var netErr net.Error
+		if errors.As(err, &netErr) && netErr.Timeout() {
+			log.Printf("read timeout, closing conn from %s", conn.RemoteAddr())
+			return
+		}
 		log.Printf("bad request: %v", err)
+		_ = conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		body := "Bad Request\n"
 		fmt.Fprintf(conn, "HTTP/1.1 400 Bad Request\r\nContent-Length: %d\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n%s", len(body), body)
 		return
 	}
 
 	log.Printf("Received: %s %s %s", req.Method, req.Target, req.Version)
+
+	if err := conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		log.Printf("set write deadline: %v", err)
+		return
+	}
 
 	switch req.Method {
 	case "GET":
