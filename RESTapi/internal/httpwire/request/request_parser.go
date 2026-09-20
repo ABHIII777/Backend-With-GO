@@ -40,6 +40,38 @@ func HTTPRequestParser(input *bufio.Reader) (*HTTPRequestStruct, error) {
 		return nil, fmt.Errorf("Invalid target %q: must start with /", target)
 	}
 
+	path := target
+
+	query := make(map[string] string)
+
+	if i := strings.Index(target, "?"); i != -1 {
+		path = target[:i]
+		raw := target[i+1:]
+		if raw != "" {
+			for _, pair := range strings.Split(raw, "&") {
+				if pair == "" {
+					continue
+				}
+	
+				kv := strings.SplitN(pair, "=", 2)
+				if len(kv) == 1 {
+					query[kv[0]] = ""
+					continue
+				}
+	
+				if kv[0] == "" {
+					return nil, errors.New("Empty query key")
+				}
+	
+				query[kv[0]] = kv[1]
+			}
+		}
+	}
+
+	if path == "" {
+		path = "/"
+	}
+
 	if !strings.HasPrefix(version, "HTTP") {
 		return nil, fmt.Errorf("Invalid version %q: expected HTTP/x.y", version)
 	}
@@ -108,7 +140,8 @@ func HTTPRequestParser(input *bufio.Reader) (*HTTPRequestStruct, error) {
 
 	return &HTTPRequestStruct{
 		Method:  method,
-		Target:  target,
+		Path: path,
+		Query: query,
 		Version: version,
 		Headers: headers,
 		Body:    body,

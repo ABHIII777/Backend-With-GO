@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sort"
+	"strings"
 	"time"
 
 	"restapi/internal/httpwire/request"
@@ -41,7 +43,25 @@ func HandleConnection(conn net.Conn) {
 		return
 	}
 
-	log.Printf("Received: %s %s %s", req.Method, req.Target, req.Version)
+	target := req.Path
+
+	if len(req.Query) > 0 {
+		keys := make([] string, 0, len(req.Query))
+		for k := range req.Query {
+			keys = append(keys, k)
+		}
+
+		sort.Strings(keys)
+
+		pairs := make([] string, 0, len(keys))
+		for _, k := range keys {
+			pairs = append(pairs, k + "=" + req.Query[k])
+		}
+
+		target += "?" + strings.Join(pairs, "&")
+	}
+
+	log.Printf("Received: %s %s %s", req.Method, target, req.Version)
 
 	if err := conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
 		log.Printf("set write deadline: %v", err)
@@ -50,10 +70,10 @@ func HandleConnection(conn net.Conn) {
 
 	switch req.Method {
 	case "GET":
-		response.HandleGETRequest(conn, req.Target)
+		response.HandleGETRequest(conn, target)
 
 	case "POST":
-		response.HandlePOSTRequest(conn, req.Target, req.Body)
+		response.HandlePOSTRequest(conn, target, req.Body)
 
 	default:
 		body := fmt.Sprintf("Unknown method %q\n", req.Method)

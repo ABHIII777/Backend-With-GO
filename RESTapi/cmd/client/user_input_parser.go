@@ -37,9 +37,9 @@ func UserInputParser(line string) (*UserInputStruct, error) {
 		return nil, errors.New("GET must not have body")
 	}
 
-	headers := map[string] string {
-		"Host" : "localhost:8080",
-		"Connection" : "close",
+	headers := map[string]string{
+		"Host":       "localhost:8080",
+		"Connection": "close",
 	}
 
 	if body != "" {
@@ -51,12 +51,40 @@ func UserInputParser(line string) (*UserInputStruct, error) {
 		return nil, errors.New("Target/Body must not contain CR or LF")
 	}
 
+	path := target
+	query := make(map[string]string)
+
+	if i := strings.Index(target, "?"); i != -1 {
+		path = target[:i]
+		raw := target[i+1:]
+		if raw != "" {
+			for _, pair := range strings.Split(raw, "&") {
+				if pair == "" {
+					continue
+				}
+				kv := strings.SplitN(pair, "=", 2)
+				if len(kv) == 1 {
+					query[kv[0]] = ""
+					continue
+				}
+				if kv[0] == "" {
+					return nil, errors.New("empty query key")
+				}
+				query[kv[0]] = kv[1]
+			}
+		}
+	}
+	if path == "" {
+		path = "/"
+	}
+
 	return &UserInputStruct{
-		Method: method,
-		Target: target,
+		Method:  method,
+		Path:    path,
+		Query:   query,
 		Version: "HTTP/1.1",
 		Headers: headers,
-		Body: body,
+		Body:    body,
 	}, nil
 
 }
