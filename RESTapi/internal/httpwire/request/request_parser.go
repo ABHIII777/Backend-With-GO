@@ -42,7 +42,7 @@ func HTTPRequestParser(input *bufio.Reader) (*HTTPRequestStruct, error) {
 
 	path := target
 
-	query := make(map[string] string)
+	query := make(map[string]string)
 
 	if i := strings.Index(target, "?"); i != -1 {
 		path = target[:i]
@@ -52,17 +52,17 @@ func HTTPRequestParser(input *bufio.Reader) (*HTTPRequestStruct, error) {
 				if pair == "" {
 					continue
 				}
-	
+
 				kv := strings.SplitN(pair, "=", 2)
 				if len(kv) == 1 {
 					query[kv[0]] = ""
 					continue
 				}
-	
+
 				if kv[0] == "" {
 					return nil, errors.New("Empty query key")
 				}
-	
+
 				query[kv[0]] = kv[1]
 			}
 		}
@@ -140,8 +140,8 @@ func HTTPRequestParser(input *bufio.Reader) (*HTTPRequestStruct, error) {
 
 	return &HTTPRequestStruct{
 		Method:  method,
-		Path: path,
-		Query: query,
+		Path:    path,
+		Query:   query,
 		Version: version,
 		Headers: headers,
 		Body:    body,

@@ -3,9 +3,15 @@ package main
 import (
 	"log"
 	"net"
+
+	"restapi/internal/repository"
 )
 
 func main() {
+	// Default store. Postgres replaces this when DATABASE_URL is wired
+	// in the next phase; memory keeps `go run ./cmd/server` working now.
+	store := repository.NewMemoryStore()
+
 	ln, err := net.Listen("tcp", ":8080")
 
 	if err != nil {
@@ -22,6 +28,6 @@ func main() {
 			continue
 		}
 
-		go HandleConnection(conn)
+		go HandleConnection(conn, store)
 	}
 }

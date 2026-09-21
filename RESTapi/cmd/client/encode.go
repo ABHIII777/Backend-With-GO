@@ -1,8 +1,8 @@
 package main
 
 import (
-	"strings"
 	"sort"
+	"strings"
 )
 
 func (input *UserInputStruct) Encode() string {
@@ -14,7 +14,7 @@ func (input *UserInputStruct) Encode() string {
 		for k := range input.Query {
 			keys = append(keys, k)
 		}
-		sort.Strings(keys) 
+		sort.Strings(keys)
 		pairs := make([]string, 0, len(keys))
 		for _, k := range keys {
 			pairs = append(pairs, k+"="+input.Query[k])
