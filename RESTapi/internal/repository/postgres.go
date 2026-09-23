@@ -116,7 +116,7 @@ func (s *PostgresStore) CreateUser(name, email string) (models.User, error) {
 			return models.User{}, ErrConflict
 		}
 
-		return models.User{}, err 
+		return models.User{}, err
 	}
 
 	return user, nil
@@ -139,6 +139,10 @@ func (s *PostgresStore) UpdateUser(id int, name string, email string) (models.Us
 		&user.CreatedAt,
 	)
 
+	if errors.Is(err, sql.ErrNoRows) {
+		return models.User{}, ErrNotFound
+	}
+
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
@@ -151,7 +155,28 @@ func (s *PostgresStore) UpdateUser(id int, name string, email string) (models.Us
 	return user, nil
 }
 
-func (s *PostgresStore) DeleteUser(id int) error { return errNotImplemented }
+func (s *PostgresStore) PatchUser (id int) {
+
+}
+
+func (s *PostgresStore) DeleteUser(id int) error {
+
+	res, err := s.db.Exec(`
+		DELETE FROM users
+		WHERE id = $1
+	`, id)
+
+	if err != nil {
+		return err
+	}
+
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
 
 func (s *PostgresStore) CreateTodo(userID int, title string) (models.Todo, error) {
 	return models.Todo{}, errNotImplemented

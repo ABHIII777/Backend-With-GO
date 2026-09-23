@@ -33,7 +33,7 @@ func Dispatch(conn net.Conn, store repository.Store, req *request.HTTPRequestStr
 		case "PATCH":
 			service.User_PATCH_service(req.Query)
 		case "DELETE":
-			service.User_DELETE_service(req.Query)
+			service.UserDeleteService(conn, store, req)
 		default:
 			response.WriteError(conn, 405, "Method Not Allowed")
 		}

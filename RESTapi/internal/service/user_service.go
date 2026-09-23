@@ -127,6 +127,15 @@ func UserPutService(conn net.Conn, store repository.Store, req *request.HTTPRequ
 	user, err := store.UpdateUser(id, input.Name, input.Email)
 
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			response.WriteError(conn, 404, "User not found")
+			return
+		}
+		if errors.Is(err, repository.ErrConflict) {
+			response.WriteError(conn, 409, "email already exists")
+			return
+		}
+		log.Printf("UpdateUser(%d): %v", id, err)
 		response.WriteError(conn, 500, "Internal Server Error")
 		return
 	}
@@ -138,6 +147,30 @@ func User_PATCH_service(query map[string]string) {
 	fmt.Println("USER PATCH SERVICE", query)
 }
 
-func User_DELETE_service(query map[string]string) {
-	fmt.Println("USER DELETE SERVICE", query)
+func UserDeleteService(conn net.Conn, store repository.Store, req *request.HTTPRequestStruct) {
+	parts := strings.Split(strings.Trim(req.Path, "/"), "/")
+	if len(parts) != 2 {
+		response.WriteError(conn, 404, "Not found")
+		return
+	}
+
+	id, err := strconv.Atoi(parts[1])
+
+	if err != nil {
+		response.WriteError(conn, 400, "Invalid user ID")
+		return
+	}
+
+	if err := store.DeleteUser(id); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			response.WriteError(conn, 404, "User not found")
+			return
+		}
+		log.Printf("DeleteUser(%d): %v", id, err)
+		response.WriteError(conn, 500, "Internal Server Error")
+		return
+	}
+
+	response.WriteJSON(conn, 204, nil)
+	
 }
