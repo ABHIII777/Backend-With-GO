@@ -23,16 +23,9 @@ func UserInputParser(line string) (*UserInputStruct, error) {
 	method := strings.ToUpper(parts[0])
 	target := parts[1]
 
-	// Preserve raw body exactly (JSON spacing matters inside strings).
-	// parts[0]=METHOD, parts[1]=TARGET, remainder of line = BODY.
 	body := ""
 	if idx := strings.Index(line, target); idx != -1 {
 		body = strings.TrimSpace(line[idx+len(target):])
-		// If METHOD appears inside body, Index finds TARGET first
-		// only when line starts with "METHOD TARGET". parts[1] is the
-		// second field, so slicing after its first occurrence is safe
-		// for lines shaped "METHOD TARGET [BODY]".
-		// Edge: `POST /a POST /b` -> body "POST /b", intended.
 		_ = parts
 	}
 

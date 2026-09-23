@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"errors"
-	"fmt"
+	// "fmt"
 	"log"
 	"net"
 	"sort"
@@ -13,6 +13,7 @@ import (
 	"restapi/internal/httpwire/request"
 	"restapi/internal/httpwire/response"
 	"restapi/internal/repository"
+	"restapi/internal/routers"
 )
 
 func HandleConnection(conn net.Conn, store repository.Store) {
@@ -69,14 +70,5 @@ func HandleConnection(conn net.Conn, store repository.Store) {
 		return
 	}
 
-	switch req.Method {
-	case "GET":
-		response.HandleGETRequest(conn, target)
-
-	case "POST", "PUT", "PATCH", "DELETE":
-		response.HandlePOSTRequest(conn, target, req.Body)
-
-	default:
-		response.WriteText(conn, 405, fmt.Sprintf("Unknown method %q\n", req.Method))
-	}
+	routers.Dispatch(conn, store, req)
 }
