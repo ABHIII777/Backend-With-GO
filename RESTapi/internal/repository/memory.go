@@ -45,6 +45,10 @@ func (m *MemoryStore) UpdateUser(id int, name, email string) (models.User, error
 	return models.User{}, errNotImplemented
 }
 
+func (m *MemoryStore) PatchUser(id int, name, email *string) (models.User, error){
+	return models.User{}, errNotImplemented
+}
+
 func (m *MemoryStore) DeleteUser(id int) error { return errNotImplemented }
 
 func (m *MemoryStore) CreateTodo(userID int, title string) (models.Todo, error) {

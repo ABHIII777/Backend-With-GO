@@ -31,7 +31,7 @@ func Dispatch(conn net.Conn, store repository.Store, req *request.HTTPRequestStr
 		case "PUT":
 			service.UserPutService(conn, store, req)
 		case "PATCH":
-			service.User_PATCH_service(req.Query)
+			service.UserPatchService(conn, store, req)
 		case "DELETE":
 			service.UserDeleteService(conn, store, req)
 		default:

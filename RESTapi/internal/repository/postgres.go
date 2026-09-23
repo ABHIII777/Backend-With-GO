@@ -155,8 +155,38 @@ func (s *PostgresStore) UpdateUser(id int, name string, email string) (models.Us
 	return user, nil
 }
 
-func (s *PostgresStore) PatchUser (id int) {
+func (s *PostgresStore) PatchUser (id int, name *string, email *string) (models.User, error) {
+	var user models.User
 
+	err := s.db.QueryRow(`
+		UPDATE users
+			SET
+				name = COALESCE ($2, name),
+				email = COALESCE ($3, email)
+			WHERE id = $1
+		RETURNING id, name, email, created_at
+	`, id, name, email).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.CreatedAt,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return models.User{}, ErrNotFound
+	}
+
+	if err != nil {
+		var pqErr *pq.Error
+
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return models.User{}, ErrConflict
+		}
+
+		return models.User{}, err
+	}
+
+	return user, nil
 }
 
 func (s *PostgresStore) DeleteUser(id int) error {

@@ -18,6 +18,7 @@ type Store interface {
 	GetUser(id int) (models.User, error)
 	ListUsers() ([]models.User, error)
 	UpdateUser(id int, name, email string) (models.User, error)
+	PatchUser(id int, name, email *string) (models.User, error)
 	DeleteUser(id int) error
 
 	CreateTodo(userID int, title string) (models.Todo, error)

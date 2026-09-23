@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -17,6 +16,11 @@ import (
 type UserCreateStruct struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
+}
+
+type UserPatchStruct struct {
+	Name  *string `json:"name"`
+	Email *string `json:"email"`
 }
 
 func UserListService(conn net.Conn, store repository.Store) {
@@ -143,8 +147,79 @@ func UserPutService(conn net.Conn, store repository.Store, req *request.HTTPRequ
 	response.WriteJSON(conn, 200, user)
 }
 
-func User_PATCH_service(query map[string]string) {
-	fmt.Println("USER PATCH SERVICE", query)
+func UserPatchService(conn net.Conn, store repository.Store, req *request.HTTPRequestStruct) {
+	var input UserPatchStruct
+	var namePtr *string
+	var emailPtr *string
+
+	if err := json.Unmarshal([]byte(req.Body), &input); err != nil {
+		response.WriteError(conn, 400, "Invalid JSON body")
+		return
+	}
+
+	if input.Name != nil {
+		trimmmedName := strings.TrimSpace(*input.Name)
+		if trimmmedName == "" {
+			response.WriteError(conn, 400, "Name field is empty")
+			return
+		}
+
+		namePtr = &trimmmedName
+	}
+
+	if input.Email != nil {
+		trimmedEmail := strings.TrimSpace(*input.Email)
+		if trimmedEmail == "" {
+			response.WriteError(conn, 400, "Email is empty")
+			return
+		}
+
+		if !strings.Contains(trimmedEmail, "@") {
+			response.WriteError(conn, 400, "Invalid email format")
+			return
+		}
+
+		emailPtr = &trimmedEmail
+	}
+	if namePtr == nil && emailPtr == nil {
+		response.WriteError(conn, 400, "Nothing to update")
+		return
+	}
+
+	parts := strings.Split(strings.Trim(req.Path, "/"), "/")
+
+	if len(parts) != 2 {
+		response.WriteError(conn, 404, "Not found")
+		return
+	}
+
+	id, err := strconv.Atoi(parts[1])
+
+	if err != nil {
+		response.WriteError(conn, 400, "Invalid User ID")
+		return
+	}
+
+	user, err := store.PatchUser(id, namePtr, emailPtr)
+
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			response.WriteError(conn, 404, "User not found")
+			return
+		}
+
+		if errors.Is(err, repository.ErrConflict) {
+			response.WriteError(conn, 409, "Name / email already exist")
+			return
+		}
+
+		log.Printf("UpdatedUser(%d): %v", id, err)
+		response.WriteError(conn, 500, "Internal server error")
+		return
+	}
+
+	response.WriteJSON(conn, 200, user)
+
 }
 
 func UserDeleteService(conn net.Conn, store repository.Store, req *request.HTTPRequestStruct) {
@@ -172,5 +247,5 @@ func UserDeleteService(conn net.Conn, store repository.Store, req *request.HTTPR
 	}
 
 	response.WriteJSON(conn, 204, nil)
-	
+
 }
