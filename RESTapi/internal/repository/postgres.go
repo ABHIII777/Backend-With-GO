@@ -122,8 +122,33 @@ func (s *PostgresStore) CreateUser(name, email string) (models.User, error) {
 	return user, nil
 }
 
-func (s *PostgresStore) UpdateUser(id int, name, email string) (models.User, error) {
-	return models.User{}, errNotImplemented
+func (s *PostgresStore) UpdateUser(id int, name string, email string) (models.User, error) {
+	var user models.User
+
+	err := s.db.QueryRow(`
+		UPDATE users
+			SET
+				name = $1,
+				email = $2
+			WHERE id = $3
+		RETURNING id, name, email, created_at
+	`, name, email, id).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.CreatedAt,
+	)
+
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return models.User{}, ErrConflict
+		}
+
+		return models.User{}, err
+	}
+
+	return user, nil
 }
 
 func (s *PostgresStore) DeleteUser(id int) error { return errNotImplemented }

@@ -29,7 +29,7 @@ func Dispatch(conn net.Conn, store repository.Store, req *request.HTTPRequestStr
 		case "POST":
 			service.UserCreateService(conn, store, req)
 		case "PUT":
-			service.User_PUT_service(req.Query)
+			service.UserPutService(conn, store, req)
 		case "PATCH":
 			service.User_PATCH_service(req.Query)
 		case "DELETE":

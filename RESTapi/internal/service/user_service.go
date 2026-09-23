@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 
 	"restapi/internal/httpwire/request"
@@ -14,7 +15,7 @@ import (
 )
 
 type UserCreateStruct struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
 	Email string `json:"email"`
 }
 
@@ -47,7 +48,7 @@ func UserGetService(conn net.Conn, store repository.Store, id int) {
 func UserCreateService(conn net.Conn, store repository.Store, req *request.HTTPRequestStruct) {
 	var input UserCreateStruct
 
-	if err := json.Unmarshal([]byte (req.Body), &input); err != nil {
+	if err := json.Unmarshal([]byte(req.Body), &input); err != nil {
 		response.WriteError(conn, 400, "Invalid JSON body")
 		return
 	}
@@ -84,8 +85,53 @@ func UserCreateService(conn net.Conn, store repository.Store, req *request.HTTPR
 	response.WriteJSON(conn, 201, user)
 }
 
-func User_PUT_service(query map[string]string) {
-	fmt.Println("USER PUT SERVICE", query)
+func UserPutService(conn net.Conn, store repository.Store, req *request.HTTPRequestStruct) {
+	var input UserCreateStruct
+
+	if err := json.Unmarshal([]byte(req.Body), &input); err != nil {
+		response.WriteError(conn, 400, "Invalid JSON body")
+		return
+	}
+
+	input.Name = strings.TrimSpace(input.Name)
+	input.Email = strings.TrimSpace(input.Email)
+
+	if input.Name == "" {
+		response.WriteError(conn, 400, "Name field cannot be left empty")
+		return
+	}
+
+	if input.Email == "" {
+		response.WriteError(conn, 400, "Email field cannot be left empty")
+		return
+	}
+
+	if !strings.Contains(input.Email, "@") {
+		response.WriteError(conn, 400, "The email format is not valid. Please enter a valid email")
+		return
+	}
+
+	parts := strings.Split(strings.Trim(req.Path, "/"), "/")
+
+	if len(parts) != 2 {
+		response.WriteError(conn, 404, "Not found")
+		return
+	}
+
+	id, err := strconv.Atoi(parts[1])
+	if err != nil {
+		response.WriteError(conn, 400, "Invalid user ID")
+		return
+	}
+
+	user, err := store.UpdateUser(id, input.Name, input.Email)
+
+	if err != nil {
+		response.WriteError(conn, 500, "Internal Server Error")
+		return
+	}
+
+	response.WriteJSON(conn, 200, user)
 }
 
 func User_PATCH_service(query map[string]string) {
