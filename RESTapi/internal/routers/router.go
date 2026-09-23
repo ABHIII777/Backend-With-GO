@@ -21,15 +21,13 @@ func Dispatch(conn net.Conn, store repository.Store, req *request.HTTPRequestStr
 
 	switch parts[0] {
 	case "users":
-		// GET is fully wired to the store. Other methods still hit
-		// the stubs below until their phase lands.
 		if req.Method == "GET" {
 			dispatchUserGET(conn, store, parts)
 			return
 		}
 		switch req.Method {
 		case "POST":
-			service.User_POST_service(req.Query)
+			service.UserCreateService(conn, store, req)
 		case "PUT":
 			service.User_PUT_service(req.Query)
 		case "PATCH":
@@ -61,8 +59,6 @@ func Dispatch(conn net.Conn, store repository.Store, req *request.HTTPRequestStr
 	}
 }
 
-// dispatchUserGET routes GET /users (collection) vs GET /users/:id (item).
-// A trailing slash ("/users/") trims to the collection.
 func dispatchUserGET(conn net.Conn, store repository.Store, parts []string) {
 	if len(parts) == 1 {
 		service.UserListService(conn, store)

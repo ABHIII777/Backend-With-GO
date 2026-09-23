@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 
 	"restapi/internal/models"
 )
@@ -13,7 +13,6 @@ type PostgresStore struct {
 	db *sql.DB
 }
 
-// Compile-time guarantee that *PostgresStore satisfies Store.
 var _ Store = (*PostgresStore)(nil)
 
 func NewPostgresStore(db *sql.DB) *PostgresStore {
@@ -97,9 +96,30 @@ func (s *PostgresStore) GetUser(id int) (models.User, error) {
 	return user, nil
 }
 
-
 func (s *PostgresStore) CreateUser(name, email string) (models.User, error) {
-	return models.User{}, errNotImplemented
+	var user models.User
+
+	err := s.db.QueryRow(`
+		INSERT INTO users(name, email)
+		VALUES ($1, $2)
+		RETURNING id, name, email, created_at
+	`, name, email).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.CreatedAt,
+	)
+
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return models.User{}, ErrConflict
+		}
+
+		return models.User{}, err 
+	}
+
+	return user, nil
 }
 
 func (s *PostgresStore) UpdateUser(id int, name, email string) (models.User, error) {
