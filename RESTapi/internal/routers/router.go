@@ -38,22 +38,6 @@ func Dispatch(conn net.Conn, store repository.Store, req *request.HTTPRequestStr
 			response.WriteError(conn, 405, "Method Not Allowed")
 		}
 
-	case "todos":
-		switch req.Method {
-		case "GET":
-			service.Todo_GET_service(req.Query)
-		case "POST":
-			service.Todo_POST_service(req.Query)
-		case "PUT":
-			service.Todo_PUT_service(req.Query)
-		case "PATCH":
-			service.Todo_PATCH_service(req.Query)
-		case "DELETE":
-			service.Todo_DELETE_service(req.Query)
-		default:
-			response.WriteError(conn, 405, "Method Not Allowed")
-		}
-
 	default:
 		response.WriteError(conn, 404, "Not Found")
 	}

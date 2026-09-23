@@ -20,11 +20,4 @@ type Store interface {
 	UpdateUser(id int, name, email string) (models.User, error)
 	PatchUser(id int, name, email *string) (models.User, error)
 	DeleteUser(id int) error
-
-	CreateTodo(userID int, title string) (models.Todo, error)
-	GetTodo(id int) (models.Todo, error)
-	ListTodos(userID *int, completed *bool) ([]models.Todo, error)
-	UpdateTodoFull(id int, title string, completed bool) (models.Todo, error)
-	PatchTodo(id int, title *string, completed *bool) (models.Todo, error)
-	DeleteTodo(id int) error
 }

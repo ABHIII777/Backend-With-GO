@@ -208,24 +208,3 @@ func (s *PostgresStore) DeleteUser(id int) error {
 	return nil
 }
 
-func (s *PostgresStore) CreateTodo(userID int, title string) (models.Todo, error) {
-	return models.Todo{}, errNotImplemented
-}
-
-func (s *PostgresStore) GetTodo(id int) (models.Todo, error) {
-	return models.Todo{}, errNotImplemented
-}
-
-func (s *PostgresStore) ListTodos(userID *int, completed *bool) ([]models.Todo, error) {
-	return nil, errNotImplemented
-}
-
-func (s *PostgresStore) UpdateTodoFull(id int, title string, completed bool) (models.Todo, error) {
-	return models.Todo{}, errNotImplemented
-}
-
-func (s *PostgresStore) PatchTodo(id int, title *string, completed *bool) (models.Todo, error) {
-	return models.Todo{}, errNotImplemented
-}
-
-func (s *PostgresStore) DeleteTodo(id int) error { return errNotImplemented }
